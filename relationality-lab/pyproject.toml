@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "relationality-lab"
+version = "0.1.0"
+description = "Tools for studying relationality."
+authors = ["Yvan Vivid <yvan.vivid@gmail.com>"]
+readme = "README.md"
+
+packages = [ { include = "relationality", from = "src" } ]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+mypy = "*"
+pylint = "^2.4.4"
+numpy = "1.18.*"
+matplotlib = "^3.2.1"
+jupyter = "^1.0.0"
+ipykernel = "^5.2.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.4.1"
+neovim = "^0.3.1"
+ipython = "^7.14.0"
+
+[tool.poetry.scripts]
+# Use for cli
+# relationality = 'relationality.__main__:run'
+
+[build-system]
+requires = ["poetry-core>=1.0.0a5"]
+build-backend = "poetry.core.masonry.api"
