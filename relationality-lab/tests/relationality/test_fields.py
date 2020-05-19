@@ -106,5 +106,10 @@ def test_relative_entropy_field():
 
 
 def test_draw():
-    distro = Distro.dirac(5, 3)
-    assert draw(distro) == 3
+    for shape, index in (
+        ((5,), (3,)),
+        ((5, 4), (3, 2)),
+        ((5, 4, 2), (3, 2, 0)),
+    ):
+        distro = Distro.dirac(shape, index)
+        assert draw(distro) == index

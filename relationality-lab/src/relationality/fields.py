@@ -9,8 +9,9 @@
 """
 from typing import Iterable
 import numpy as np  # type: ignore
+import numpy.random as nprand  # type: ignore
 
-from relationality.util import Shape, dims, shape_lift
+from relationality.util import Shape, dims, shape_lift, Indexer
 
 
 class Histo(np.ndarray):
@@ -59,7 +60,30 @@ class Histo(np.ndarray):
         return cls.from_array(under, base_rank)
 
     def fiber_axis(self):
+        """Get the axes for the fiber."""
         return tuple(range(self.base_rank, dims(self)))
+
+    def point(self, index: Indexer):
+        """Index point from the base space."""
+        rank = dims(index)
+        if rank > self.base_rank:
+            raise ValueError("rank of index is bigger than base")
+        seg = self[index]
+        seg.base_rank = self.base_rank - rank
+        return seg
+
+    def update(self, updater: 'Histo'):
+        """Multiplicative update for field."""
+        if self.shape != updater.shape:
+            raise ValueError("updater shape does not match the histo")
+        if self.base_rank != updater.base_rank:
+            raise ValueError("updater base_rank does not match the histo")
+        return self.__class__.from_array(self*updater, base_rank=self.base_rank)
+
+    def update_at(self, updater: 'Histo', index: Indexer):
+        """Multiplicative in-place update for field at a point."""
+        subfield = self.point(index)
+        self[index] = subfield.update(updater)
 
 
 class Distro(Histo):
@@ -101,15 +125,15 @@ def information(distro: Distro) -> Histo:
     return Histo.from_array(under, base_rank=distro.base_rank)
 
 
-def entropy(distro: Distro) -> float:
+def entropy(distro: Distro) -> np.ndarray:
     """Shannon entropy of distro in average nats."""
     if len(distro) == 1:
         return 0.0
-    info = -np.log2(distro, where=(distro > 0.))
-    return np.sum(info*distro, axis=distro.fiber_axis())
+    neg_info = np.log2(distro, where=(distro > 0.))
+    return -np.sum(neg_info*distro, axis=distro.fiber_axis())
 
 
-def relative_entropy(distro: Distro) -> float:
+def relative_entropy(distro: Distro) -> np.ndarray:
     """Entropy as a ratio with maximum entropy for size.
         Will be between 0 and 1.
         0 indicates certitude
@@ -127,11 +151,12 @@ def accumulate(distro: Distro) -> Cumulate:
     return Cumulate.from_distro(distro)
 
 
-def draw(distro: Distro) -> int:
+def draw(distro: Distro) -> Shape:
     """Draw randomly from a distro."""
-    uni_index = np.random.rand()
-    for choice in range(len(distro)):
-        if uni_index < distro[choice]:
-            return choice
-        uni_index -= distro[choice]
-    return choice
+    if distro.base_rank > 0:
+        raise NotImplementedError(
+            "Only single distros are currently supported. "
+            "No field support yet."
+        )
+    flat_index = nprand.choice(a=distro.size, p=distro.flat)
+    return np.unravel_index(flat_index, distro.shape)

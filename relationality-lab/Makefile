@@ -1,3 +1,5 @@
+PYTHON = "python3.7"
+
 tooling_venv = "tooling-venv"
 poetry = "$(tooling_venv)/bin/poetry"
 
@@ -23,7 +25,7 @@ lint: .dev
 	touch .dev
 
 .tooling: tooling-requirements.txt
-	bash setup
+	PYTHON=$(PYTHON) bash setup
 	touch .tooling
 
 clean-cache:
