@@ -13,7 +13,7 @@ if [[ -d "$venv" ]]; then
   log "Found virtual environment."
 else
   log "Creating virtual environment."
-  if command -v "$python"; then
+  if ! command -v "$python"; then
     log "Error: python interpreter not found at [$python]"
     log "Set PYTHON to location of python"
     exit 1
